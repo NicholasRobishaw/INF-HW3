@@ -6,7 +6,7 @@ class Queries_HT{
     // hash size will be a configurable parameter
 
     public:
-    int hash_Size = 12;
+    int hash_Size = 60000000;
     int hash_mod = hash_Size;
     int radix_Base = 5; // A, C, G, T, N
     int radix_Character_Num[5] = {0, 1, 2, 3, 4};
@@ -14,10 +14,10 @@ class Queries_HT{
 
     fragment_Node** hash_Table;
 
-    const long MAX_FRAGMENTS = 1000; 
+    const long MAX_FRAGMENTS = 125000000; 
     const long MAX_SCAFFOLD_COUNT = 608;
 
-    unsigned int collision_Count;
+    int collision_Count;
 
 
     // file reader for query file
@@ -26,7 +26,6 @@ class Queries_HT{
         ifstream file(file_Name);
         string current_Line;
         int query_Num = 0;
-        time_t stop_Watch = 0;
         
         // check if the file can be opened
         if (!file.is_open()) {
@@ -64,7 +63,7 @@ class Queries_HT{
     void initialize_Hash(){
         // create an array of hash table size
         // each index of the array will store a LL
-        hash_Table[hash_Size];
+        hash_Table = new fragment_Node*[hash_Size];
 
         collision_Count = 0;
 
@@ -85,7 +84,11 @@ class Queries_HT{
         // get the hash index of the fragment
         fragment_Radix = radix_Noation(fragment_String);
 
+        // cerr << "Fragment radix return: " << fragment_Radix << endl;
+
         int hash_Index = fragment_Radix % hash_mod; 
+        
+        // cerr << "Hash index: " << hash_Index << endl;
 
         if(hash_Table[hash_Index] != nullptr){
             collision_Count++;
@@ -162,16 +165,21 @@ class Queries_HT{
 
         int string_Size = fragment_Size - 2;
         int index;
-        unsigned int radix_Conversion;
+        unsigned int radix_Conversion = 0;
         int character_Num;
 
         // loop through the string from right to left
         for(index = string_Size; index >= 0; index--){
+            
+            // cerr << "Current character being processed: " << fragment_Str[index] << endl;
+            
             // get the character number 
-            character_Value(fragment_Str[index]);
+            character_Num = character_Value(fragment_Str[index]);
+            
+            // cerr << "Character_Num = " << character_Num << endl;
             
             // convert string to radix notation
-            radix_Conversion += (character_Num * radix_Base^(string_Size - index));
+            radix_Conversion += (character_Num * (radix_Base^(string_Size - index)));
         }
 
         // return radix converted string
@@ -181,15 +189,24 @@ class Queries_HT{
     // returns the radix number for the letter
     int character_Value(char letter){
         int index;
-
-        // loop through the alphabet of values (A, C, G, T, and N)
-        for(index = 0; index < radix_Base; index++){
-            // check which letter is a match and return the index which is also the number for that letter
-            if(letter == radix_Character_Num[index]){
-                return index;
-            }
+        
+        switch (letter) {
+            case 'A':
+                index = 0;
+                break;
+            case 'C':
+                index = 1;
+                break;
+            case 'G':
+                index = 2;
+                break;
+            case 'T':
+                index = 3;
+                break;
+            default:
+                index = 4;
         }
-
+        
         return index;
     }
 
@@ -201,10 +218,10 @@ int main(int argc, char* argv[]){
 
     // check if the program has the appropriate number of parameter
     // create error handler for no input file argument
-    if( argc < 4 ){
-        cout << "Error please input the correct command in\n Program End";
-        return 1;
-    }
+    // if( argc < 2 ){
+    //     cout << "Error please input the correct command in\n Program End";
+    //     return 1;
+    // }
 
     // Subproblem A -  Assess the impact of the hash table size
     // set hash table to fixed size ( 1 million, 10 million, 30 million and 60 million )
@@ -212,11 +229,17 @@ int main(int argc, char* argv[]){
     time(&stop_Watch);
     cout << "Program Start at: " << ctime(&stop_Watch) << endl;
 
+    cerr << "Starting to initialize hash table\n";
+
     // initialize the hash table
     my_Hash.initialize_Hash();
+    
+    cerr << "Finished initialize hash table\n";
 
     time(&stop_Watch);
     cout << "Starting hash table population at: " << ctime(&stop_Watch) << endl;
+
+    cerr << "Beginning to read querry\n";
 
     // populate hash table with the sequence fragments from the query dataset
     if(my_Hash.read_Qurey(argv[2])){
@@ -226,7 +249,30 @@ int main(int argc, char* argv[]){
         time(&stop_Watch);
         cout << "End of hash table population at: " << ctime(&stop_Watch) << endl;
     }
+    
+    cerr << "Finished populating hash table\n";
 
+    
+    // display info
+    cout << "Hash Size           : " << my_Hash.hash_Size << endl;
+    cout << "Number of collisions: " << my_Hash.collision_Count << endl;
+    
+    for(int index = 0; index < 10; index++){
+        if( my_Hash.hash_Table[index] != nullptr ){
+            cout << " ";
+            
+            for(int col = 0; col < 32; col++){
+                cout << my_Hash.hash_Table[index]->fragment[col];
+            }
+            
+            cout << endl;
+        }
+        
+        else{
+            cout << " NULL\n";
+        }
+    }
+    
     
     // Subproblem B -  Searching Speed
     // set hash table to size 60 million

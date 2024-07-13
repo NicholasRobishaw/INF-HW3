@@ -4,6 +4,10 @@
 #include <string.h>
 #include <ctime>
 #include <memory>
+#include <math.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <ctype.h>
 
 #ifndef MAIN_H
 
@@ -18,7 +22,7 @@ typedef struct fragment_Node{
 
 // phase 1
 bool read_Qurey(const string& file_Name);
-void initialize_Hash();
+void initialize_Hash(int size);
 void hash_Constructor(string fragment_String);
 fragment_Node* new_Node(int hash_Index, string fragment_String);
 void hash_Deconstructor();

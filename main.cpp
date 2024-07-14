@@ -3,39 +3,27 @@
 using namespace std;
 
 class Queries_HT{
-    // hash size will be a configurable parameter
 
     public:
-    // int hash_Size = 60000000;
-    //int hash_Size = 30000000;
-    //int hash_Size = 10000000;
-    // int hash_Size = 1000000;
     int hash_Size;
     int hash_Mod;
     int radix_Base = 5; // A, C, G, T, N
     int radix_Character_Num[5] = {0, 1, 2, 3, 4};
+    int collision_Count;
     int fragment_Size = 33;
     
-
-    fragment_Node** hash_Table;
-
     const long MAX_FRAGMENTS = 125000000; 
-    //const long MAX_FRAGMENTS = 1000; 
-    // const long MAX_SCAFFOLD_COUNT = 608;
-    const long MAX_SCAFFOLD_COUNT = 1;
-
-    int collision_Count;
-
-    char* genome_Data = nullptr;
+    const long MAX_SCAFFOLD_COUNT = 608;
     long genome_Size = 0;
     long allocated_Genome_Size = 3000000000;
     long fragments_Found;
-
-    char** fragments;
-    long allocated_Frag_Size = 3057186554; // this was set to 10 mil on initial run
-    
+    long allocated_Frag_Size = 3057186554; 
     long scaffold_Count = 0;
 
+    char* genome_Data = nullptr;
+    char** fragments;
+    fragment_Node** hash_Table;
+    
 
     // file reader for query file
     // read query dataset file function
@@ -219,10 +207,14 @@ class Queries_HT{
         
         // Traverse the linked list at hash_Index to check for existing fragment
         fragment_Node* current = hash_Table[hash_Index];
+        
+        if(current != nullptr){
+            // Found a collision
+            collision_Count++;
+        }
+        
         while (current != nullptr) {
             if (current->fragment == fragment_String) {
-                // Found a collision
-                collision_Count++;
                 
                 // end of function since a duplicate was found
                 return; 
@@ -298,18 +290,12 @@ class Queries_HT{
         
         // iterate thorugh the string from 
         for (int index = 0; index < fragment_Size; index++) {
+            // get the character value
             character_Num = character_Value(fragment_Str[index]);
+            
+            //calculate the radix conversion for the character
             radix_Conversion += (character_Num * pow(radix_Base, fragment_Size - 1 - index));
         }
-        
-        // iterate though the fragment string from right to left
-        // for (int index = fragment_Size -1; index >= 0; index--) {
-        //     // convert the character to its aplhabet position
-        //     character_Num = character_Value(fragment_Str[index]);
-            
-        //     // convert to the radix notation
-        //     radix_Conversion += (character_Num * pow(radix_Base, (fragment_Size-1) - index ));
-        // }
     
         return radix_Conversion;
     }
@@ -357,9 +343,9 @@ class Queries_HT{
             if(high_Index < genome_Size){
                 
                 
-                if( index % 500000 == 0 ){
-                    cerr << "On index: " << index << endl;
-                }
+                // if( index % 500000 == 0 ){
+                //     cerr << "On index: " << index << endl;
+                // }
 
                 // reset the genome index back to the start
                 genome_Index = 0;
@@ -423,24 +409,6 @@ class Queries_HT{
     }
 
 
-    // this function is not being used rn. It can potentially replace strcmp in the lookup_Hash function
-    // bool compare_Fragments(string target, char fragment[]){
-    //     int index;
-        
-    //     // iterate over the test fragment
-    //     for( index = 0; index < fragment_Size-1; index++){
-            
-    //         // check if there is a differnce
-    //         if(target[index] != fragment[index]){
-    //             // return failure if difference
-    //             return false;
-    //         }
-    //     }
-        
-    //     return true;
-    // }
-
-
     // function for adding new found fragment to storage
     void found_Frags( char fragment[]){
         long index;
@@ -459,7 +427,6 @@ class Queries_HT{
             for( index = 0; index < fragments_Found; index++){
                 new_Arr[index] = fragments[index];
             }
-    
     
             // delete old fragment array
             delete[] fragments;
@@ -512,7 +479,7 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    // check if a hash size was incorrectly inputted
+    // check and set hash size
     if     (strcmp("60000000", argv[3]) ==0 ){
         // set the hash size
         h_Size = 60000000;
@@ -529,12 +496,11 @@ int main(int argc, char* argv[]){
         // set the hash size
         h_Size = 1000000;
     }
+    // otherwise assunme bad input and return error
     else{
         cout << "Error please input the correct hash size in\n Program End";
         return 1;   
     }
-    
-    cerr << argv[4] << endl;
     
     // check if a subproblem was incorrectly inputted
     if(strcmp("-A", argv[4]) !=0 && strcmp("-B", argv[4]) !=0){
@@ -549,7 +515,6 @@ int main(int argc, char* argv[]){
     
     // Subproblem A -  Assess the impact of the hash table size
     // set hash table to fixed size ( 1 million, 10 million, 30 million and 60 million )
-
     time(&stop_Watch);
     cout << "Program Start at: " << ctime(&stop_Watch) << endl;
 
